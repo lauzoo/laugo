@@ -21,7 +21,7 @@ BUILD_DIR_LINK=$(shell readlink ${BUILD_DIR})
 LDFLAGS = -ldflags "-X main.VERSION=${VERSION} -X main.COMMIT=${COMMIT} -X main.BRANCH=${BRANCH}"
 
 # Build the project
-all: link clean test vet linux darwin windows
+all: clean
 
 link:
 	BUILD_DIR=${BUILD_DIR}; \
@@ -58,17 +58,14 @@ test:
 	if ! hash go2xunit 2>/dev/null; then go install github.com/tebeka/go2xunit; fi
 	cd ${BUILD_DIR}; \
 	godep go test -v ./... 2>&1 | go2xunit -output ${TEST_REPORT} ; \
-	cd - >/dev/null
 
 vet:
-	-cd ${BUILD_DIR}; \
-	godep go vet ./... > ${VET_REPORT} 2>&1 ; \
-	cd - >/dev/null
+	-cd ${CURRENT_DIR}
+	go vet . > ${VET_REPORT} 2>&1
 
 fmt:
-	cd ${BUILD_DIR}; \
-	go fmt $$(go list ./... | grep -v /vendor/) ; \
-	cd - >/dev/null
+	cd ${CURRENT_DIR}
+	go fmt $$(go list ./... | grep -v /vendor/)
 
 clean:
 	-rm -f ${TEST_REPORT}
