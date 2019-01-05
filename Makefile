@@ -39,6 +39,7 @@ linux:
 	GOOS=linux GOARCH=${GOARCH} go build ${LDFLAGS} \
 	    -o cmake-build-linux/${BINARY}-linux-${GOARCH} \
 	    ./cmd/${BINARY}/*.go
+	cp cmake-build-linux/${BINARY}-linux-${GOARCH} /tmp/${BINARY}
 
 darwin:
 	cd ${BUILD_DIR}; \
