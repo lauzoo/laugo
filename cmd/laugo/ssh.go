@@ -1,20 +1,14 @@
 package main
 
 import (
-	"fmt"
-	"io/ioutil"
-	"log"
-	"net"
-	"os"
-	"os/user"
-	"path"
 	"strings"
-	"time"
 
 	. "github.com/lauzoo/laugo/internal/pkgs/log"
+	"github.com/lauzoo/laugo/internal/pkgs/ssh"
 
+	"github.com/go-yaml/yaml"
+	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
-	"golang.org/x/crypto/ssh"
 )
 
 var (
@@ -22,6 +16,8 @@ var (
 	port     int
 	username string
 	password string
+	cmdLen   = 6
+	sshTool  = ssh.Tools{}
 )
 
 func init() {
@@ -42,9 +38,13 @@ var sshCmd = &cobra.Command{
 			return
 		}
 
-		switch strings.ToUpper(args[0])[:7] {
-		case "COPY-ID":
-			sshCopyId(host, port, username, password)
+		switch strings.ToUpper(args[0])[:cmdLen] {
+		case "COPY-ID"[:cmdLen]:
+			sshTool.CopyKey(host, port, username, password)
+		case "TUNNEL"[:cmdLen]:
+			var config *ssh.YamlConfig
+			config = readConfig()
+			sshTool.CreateTunnel(config.Tunnels[0])
 		default:
 			Log.Error("unsupport operation: " + args[0])
 			return
@@ -52,72 +52,18 @@ var sshCmd = &cobra.Command{
 	},
 }
 
-func getSSHKey() (key string) {
-	var err error
-	var usr *user.User
-	if usr, err = user.Current(); err != nil {
-		panic(err)
-	}
-
-	var sshKeyPath string
-	var sshKeyContent []byte
-	sshKeyPath = path.Join(usr.HomeDir, ".ssh/id_rsa.pub")
-	if sshKeyContent, err = ioutil.ReadFile(sshKeyPath); err != nil {
-		panic(err)
-	}
-	return strings.TrimSpace(string(sshKeyContent))
-}
-
-func sshCopyId(host string, port int, username string, password string) {
-	session, err := connect(username, password, host, port)
+func readConfig() *ssh.YamlConfig {
+	fs := afero.NewOsFs()
+	file, err := afero.ReadFile(fs, "/root/.tunnel.yml")
 	if err != nil {
-		log.Fatal(err)
-	}
-	defer session.Close()
-
-	session.Stdout = os.Stdout
-	session.Stderr = os.Stderr
-
-	var cmd string
-	var sshKey = getSSHKey()
-	cmd = fmt.Sprintf("echo \"%s\"  >> ~/.ssh/authorized_keys", sshKey)
-	session.Run(cmd)
-}
-
-func connect(user, password, host string, port int) (*ssh.Session, error) {
-	var (
-		auth         []ssh.AuthMethod
-		addr         string
-		clientConfig *ssh.ClientConfig
-		client       *ssh.Client
-		session      *ssh.Session
-		err          error
-	)
-	// get auth method
-	auth = make([]ssh.AuthMethod, 0)
-	auth = append(auth, ssh.Password(password))
-
-	clientConfig = &ssh.ClientConfig{
-		User:    user,
-		Auth:    auth,
-		Timeout: 30 * time.Second,
-		HostKeyCallback: func(hostname string, remote net.Addr, key ssh.PublicKey) error {
-			// todo(@liuliqiang): save host key to local?
-			return nil
-		},
+		panic(err)
 	}
 
-	// connet to ssh
-	addr = fmt.Sprintf("%s:%d", host, port)
-
-	if client, err = ssh.Dial("tcp", addr, clientConfig); err != nil {
-		return nil, err
+	var config ssh.YamlConfig
+	yaml.Unmarshal(file, &config)
+	if err != nil {
+		panic(err)
 	}
 
-	// create session
-	if session, err = client.NewSession(); err != nil {
-		return nil, err
-	}
-
-	return session, nil
+	return &config
 }
