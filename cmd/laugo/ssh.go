@@ -3,8 +3,8 @@ package main
 import (
 	"strings"
 
-	. "github.com/lauzoo/laugo/internal/pkgs/log"
-	"github.com/lauzoo/laugo/internal/pkgs/ssh"
+	. "github.com/liuliqiang/laugo/internal/pkgs/log"
+	"github.com/liuliqiang/laugo/internal/pkgs/ssh"
 
 	"github.com/go-yaml/yaml"
 	"github.com/spf13/afero"
