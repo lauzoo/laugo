@@ -6,9 +6,11 @@ require (
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/google/glog v0.3.5 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/sirupsen/logrus v1.4.1 // indirect
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/viper v1.3.1 // indirect
 	github.com/tebeka/go2xunit v1.4.10 // indirect
 	golang.org/x/crypto v0.0.0-20181203042331-505ab145d0a9
 	golang.org/x/sys v0.0.0-20181228144115-9a3f9b0469bb // indirect
+	gopkg.in/resty.v1 v1.12.0 // indirect
 )
